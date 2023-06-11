@@ -1,48 +1,47 @@
 require('dotenv').config();
-const fs = require('fs');
-const flag = (process.argv.indexOf('--name') > -1);
-
+const fs = require('fs/promises');
+const Axios = require('axios');
+const axios = Axios.create({
+    baseURL: 'https://americas.api.riotgames.com/',
+    headers: {
+        'X-Riot-Token': process.env.TOKEN,
+        'Content-Type': 'application/json',
+    },
+});
+// Check if name arg exists and extracts it
+const flag = (process.argv.indexOf('-n') > -1);
 let name;
 if (flag && process.argv.length == 4) {
-    name = process.argv[process.argv.indexOf('--name') + 1];
+    name = process.argv[process.argv.indexOf('-n') + 1];
 }
 else {
-    console.log('Usage: $node createTournament --name <name>');
+    console.log(`usage: ${process.argv[1]} createTournament -n name`);
     process.exit(-1);
 }
-
-const url = 'https://americas.api.riotgames.com/lol/tournament/v4/tournaments';
-const body = {
-    'name': name,
-    'providerId': process.env.PROVIDERID,
-};
-
+const url = 'lol/tournament/v4/tournaments';
+// API call with axios library
 (async () => {
     try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-Riot-Token': process.env.TOKEN,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-        console.log(`Recieved status ${res.status}`);
-        if (res.ok) {
-            const tournamentId = await res.json();
-            const tournaments = require('./tournaments.json');
-            tournaments[name] = tournamentId;
-
-            fs.writeFileSync('tournaments.json', JSON.stringify(tournaments), (err) => {
-                if (err) throw err;
-                console.log(`Saved new tournament id ${name} : ${tournamentId}`);
+        const res = await axios.post(url,
+            {
+                'name': name,
+                'providerId': process.env.PROVIDERID,
             });
+        // log status and response body
+        console.log(`Request ${res.request} yielded status:: ${res.status}\nheaders::\n${res.headers}\nbody::\n${res.data}`);
+        if (res.status >= 200 && res.status <= 299) {
+        // Write tournament ID to file
+            const tournamentId = res.data;
+            
+            const tournaments = JSON.parse(JSON.stringify(require('./tournaments.json')));
+            tournaments[name] = tournamentId;
+            await fs.writeFile('tournaments.json', JSON.stringify(tournaments));
         }
         else {
-            console.log('Response not 200');
+            console.log(`Recieved code ${res.status}`);
         }
     }
     catch (e) {
-        console.log(e.code);
+        console.log(e);
     }
 })();
