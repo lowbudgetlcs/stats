@@ -1,7 +1,6 @@
 require('dotenv').config();
 const fs = require('fs/promises');
-const Axios = require('axios');
-const axios = Axios.create({
+const axios = require('axios').create({
     baseURL: 'https://americas.api.riotgames.com/',
     headers: {
         'X-Riot-Token': process.env.TOKEN,
@@ -32,7 +31,6 @@ const url = 'lol/tournament/v4/tournaments';
         if (res.status >= 200 && res.status <= 299) {
         // Write tournament ID to file
             const tournamentId = res.data;
-            
             const tournaments = JSON.parse(JSON.stringify(require('./tournaments.json')));
             tournaments[name] = tournamentId;
             await fs.writeFile('tournaments.json', JSON.stringify(tournaments));

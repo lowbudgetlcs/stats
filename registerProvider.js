@@ -1,6 +1,5 @@
 require('dotenv').config();
-const Axios = require('axios');
-const axios = Axios.create({
+const axios = require('axios').create({
     baseURL: 'https://americas.api.riotgames.com/',
     headers: {
         'X-Riot-Token': process.env.TOKEN,
