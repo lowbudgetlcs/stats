@@ -2,9 +2,11 @@
   "name": "stats",
   "version": "1.0.0",
   "description": "",
-  "main": "capturePostMatch.js",
+  "main": "captureMatchDTO.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx functions-framework --target=captureMatchDTO [--signature-type=http]",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretty": "npx eslint *.js --fix"
   },
   "author": "",
   "license": "ISC",
