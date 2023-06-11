@@ -1,7 +1,5 @@
-const fs = require('fs');
 require('dotenv').config();
-providerId = process.env.PROVIDERID;
-
+const fs = require('fs');
 const flag = (process.argv.indexOf('--name') > -1);
 
 let name;
@@ -12,28 +10,39 @@ else {
     console.log('Usage: $node createTournament --name <name>');
     process.exit(-1);
 }
+
+const url = 'https://americas.api.riotgames.com/lol/tournament/v4/tournaments';
 const body = {
     'name': name,
-    'providerId': providerId,
+    'providerId': process.env.PROVIDERID,
 };
 
-async () => {
-    const res = await fetch('https://americas.api.riotgames.com/lol/tournament/v4/tournaments', {
-        method: 'POST',
-        headers: {
-            'X-Riot-Token': process.env.TOKEN,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
+(async () => {
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Riot-Token': process.env.TOKEN,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+        console.log(`Recieved status ${res.status}`);
+        if (res.ok) {
+            const tournamentId = await res.json();
+            const tournaments = require('./tournaments.json');
+            tournaments[name] = tournamentId;
 
-    const data = await res.body;
-    const tournamentId = data.content;
-    const obj = {};
-    obj[name] = tournamentId;
-    fs.appendFile('tournaments.json', JSON.stringify(obj), (err) => {
-        if (err) throw err;
-        console.log('Saved new tournament id');
-    });
-
-};
+            fs.writeFileSync('tournaments.json', JSON.stringify(tournaments), (err) => {
+                if (err) throw err;
+                console.log(`Saved new tournament id ${name} : ${tournamentId}`);
+            });
+        }
+        else {
+            console.log('Response not 200');
+        }
+    }
+    catch (e) {
+        console.log(e.code);
+    }
+})();
