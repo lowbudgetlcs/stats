@@ -1,17 +1,18 @@
-require('dotenv').config();
-const targetURLs = {
-    ECONOMY: process.env.ECONOMY_URL
-};
-const axios = require('axios').create({
-    baseURL: 'https://americas.api.riotgames.com/',
-    headers: {
-        'X-Riot-Token': process.env.TOKEN,
-        'Content-Type': 'application/json',
-    },
-});
-
 exports.captureMatchDTO = (req, res) => {
-    console.log(req.body);
+    require('dotenv').config();
+    const targetURLs = {
+        ECONOMY: process.env.ECONOMY_URL,
+    };
+    const axios = require('axios');
+    const client = axios.create({
+        baseURL: 'https://americas.api.riotgames.com',
+        headers: {
+            'X-Riot-Token': process.env.TOKEN,
+            'Content-Type': 'application/json',
+        },
+    });
+    console.log('Recieved matchDTO from Riot.');
+    console.log(req.body)
     const body = req.body;
     const gameId = body.gameId;
     const target = body.metaData;
@@ -19,16 +20,18 @@ exports.captureMatchDTO = (req, res) => {
         // Acknowledge payload delivery
         res.status(200).send();
         (async () => {
-            const resRiot = await axios.get(`/lol/match/v5/matches/NA1_${gameId}`);
+            const resRiot = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
+            console.log(`Recieved ${resRiot.status} from match-v5 endpoint`);
             console.log(resRiot.data);
             const participants = resRiot.data.info.participants;
-            const players = participantDTOHandler(participants);
+            const players = await participantDTOHandler(participants, axios);
+            console.log(players);
             // Send data to google script for collection
-            const resGoogle = await axios.post(targetURLs[target],
+            const resGoogle = await client.post(targetURLs[target],
                 {
                     'players': players,
                 });
-            console.log(resGoogle.status);
+            console.log(`Recieved ${resGoogle.status} from spreadsheet script`);
         })();
     }
     else {
@@ -42,15 +45,31 @@ exports.captureMatchDTO = (req, res) => {
  * @param {List of participant data from Riot server call} participants
  * @returns A pruned list of participant data that can be used for stat collection
  */
-function participantDTOHandler(participants) {
+async function participantDTOHandler(participants, axios) {
+    const client = axios.create({
+        baseURL: 'https://na1.api.riotgames.com',
+        headers: {
+            'X-Riot-Token': process.env.TOKEN,
+            'Content-Type': 'application/json',
+        },
+    });
     const playerDTO = [];
     for (const participant of participants) {
-        console.log(participant);
         const data = {};
-        data.id = participant.puuid;
+        try {
+            // Replace puuid with summoner name
+            const res = await client.get(`/lol/summoner/v4/summoners/by-puuid/${participant.puuid}`);
+            const name = res.data.name;
+            data.name = name;
+            console.log(data);
+        }
+        catch (e) {
+            console.log(e);
+        }
+        // Extract relevant data
         data.kills = participant.kills;
-        data.assists = participant.assists;
         data.deaths = participant.deaths;
+        data.assists = participant.assists;
         data.kda = participant.challenges.kda;
         data.level = participant.champLevel;
         data.championName = participant.championName;
