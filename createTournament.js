@@ -45,17 +45,17 @@ const url = 'lol/tournament/v4/tournaments';
     catch (err) {
         if (err.response) {
             // Error code
-                Logger.log(`Recieved status code:: ${err.response.status}`);
-                Logger.log(`Request data:: ${err.response.data}`);
-                Logger.log(`With headers:: ${err.response.headers}`);
-            }
-            else if (err.request) {
+            Logger.log(`Recieved status code:: ${err.response.status}`);
+            Logger.log(`Request data:: ${err.response.data}`);
+            Logger.log(`With headers:: ${err.response.headers}`);
+        }
+        else if (err.request) {
             // No response
-                Logger.log(`No response recieved:: ${err.request}`);
-            }
-            else {
+            Logger.log(`No response recieved:: ${err.request}`);
+        }
+        else {
             // Error setting up request
-                Logger.log('Error', err.toJson());
-            }
+            Logger.log('Error', err.toJson());
+        }
     }
 })();
