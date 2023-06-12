@@ -6,6 +6,9 @@ const axios = require('axios').create({
         'X-Riot-Token': process.env.TOKEN,
         'Content-Type': 'application/json',
     },
+    validateStatus: (status) => {
+        return status >= 200 && status <= 299;
+    },
 });
 // Check if name arg exists and extracts it
 const flag = (process.argv.indexOf('-n') > -1);
@@ -39,7 +42,20 @@ const url = 'lol/tournament/v4/tournaments';
             console.log(`Recieved code ${res.status}`);
         }
     }
-    catch (e) {
-        console.log(e);
+    catch (err) {
+        if (err.response) {
+            // Error code
+                Logger.log(`Recieved status code:: ${err.response.status}`);
+                Logger.log(`Request data:: ${err.response.data}`);
+                Logger.log(`With headers:: ${err.response.headers}`);
+            }
+            else if (err.request) {
+            // No response
+                Logger.log(`No response recieved:: ${err.request}`);
+            }
+            else {
+            // Error setting up request
+                Logger.log('Error', err.toJson());
+            }
     }
 })();

@@ -1,8 +1,9 @@
 require('dotenv').config();
+const axios = require('axios');
+
 const targetURLs = {
     ECONOMY: process.env.ECONOMY_URL,
 };
-const axios = require('axios');
 
 exports.captureMatchDTO = (req, res) => {
     Logger.log(`Recieved match data at ${new Date().toTimeString()} with ${req.body}`);
@@ -36,21 +37,8 @@ exports.captureMatchDTO = (req, res) => {
                 Logger.log(`Recieved ${resGoogle.status} from ${target} endpoint`);
             })();
         }
-        catch (err) {
-            if (err.response) {
-            // Error code
-                Logger.log(`Recieved status code:: ${err.response.status}`);
-                Logger.log(`Request data:: ${err.response.data}`);
-                Logger.log(`With headers:: ${err.response.headers}`);
-            }
-            else if (err.request) {
-            // No response
-                Logger.log(`No response recieved:: ${err.request}`);
-            }
-            else {
-            // Error setting up request
-                Logger.log('Error', err.toJson());
-            }
+        catch (e) {
+            axiosError(e)
         }
     }
     else {
@@ -65,7 +53,7 @@ exports.captureMatchDTO = (req, res) => {
  * @returns A pruned list of participant data that can be used for stat collection
  */
 async function participantDTOHandler(participants) {
-    Logger.log('Began participany data preparation');
+    Logger.log('Began participant data preparation');
     const client = axios.create({
         baseURL: 'https://na1.api.riotgames.com',
         headers: {
@@ -87,20 +75,7 @@ async function participantDTOHandler(participants) {
             data.name = name;
         }
         catch (e) {
-            if (err.response) {
-                // Error code
-                    Logger.log(`Recieved status code:: ${err.response.status}`);
-                    Logger.log(`Request data:: ${err.response.data}`);
-                    Logger.log(`With headers:: ${err.response.headers}`);
-                }
-                else if (err.request) {
-                // No response
-                    Logger.log(`No response recieved:: ${err.request}`);
-                }
-                else {
-                // Error setting up request
-                    Logger.log('Error', err.toJson());
-                }
+            axiosError(e);
         }
         // Extract relevant data
         data.kills = participant.kills;
@@ -117,4 +92,21 @@ async function participantDTOHandler(participants) {
         playerDTO.push(data);
     }
     return playerDTO;
+}
+
+function axiosError(err){
+    if (err.response) {
+        // Error code
+            Logger.log(`Recieved status code:: ${err.response.status}`);
+            Logger.log(`Request data:: ${err.response.data}`);
+            Logger.log(`With headers:: ${err.response.headers}`);
+        }
+        else if (err.request) {
+        // No response
+            Logger.log(`No response recieved:: ${err.request}`);
+        }
+        else {
+        // Error setting up request
+            Logger.log('Error', err.toJson());
+        }
 }
