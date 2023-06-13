@@ -32,7 +32,7 @@ const url = 'lol/tournament/v4/tournaments';
         // log status and response body
         console.log(`Request ${res.request} yielded status:: ${res.status}\nheaders::\n${res.headers}\nbody::\n${res.data}`);
         if (res.status >= 200 && res.status <= 299) {
-        // Write tournament ID to file
+            // Write tournament ID to file
             const tournamentId = res.data;
             const tournaments = JSON.parse(JSON.stringify(require('./tournaments.json')));
             tournaments[name] = tournamentId;
@@ -45,17 +45,17 @@ const url = 'lol/tournament/v4/tournaments';
     catch (err) {
         if (err.response) {
             // Error code
-            Logger.log(`Recieved status code:: ${err.response.status}`);
-            Logger.log(`Request data:: ${err.response.data}`);
-            Logger.log(`With headers:: ${err.response.headers}`);
+            Console.log(`Recieved status code:: ${err.response.status}`);
+            Console.log(`Request data:: ${err.response.data}`);
+            Console.log(`With headers:: ${err.response.headers}`);
         }
         else if (err.request) {
             // No response
-            Logger.log(`No response recieved:: ${err.request}`);
+            Console.log(`No response recieved:: ${err.request}`);
         }
         else {
             // Error setting up request
-            Logger.log('Error', err.toJson());
+            Console.log('Error', err.toJson());
         }
     }
 })();
