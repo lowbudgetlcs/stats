@@ -6,7 +6,7 @@ const targetURLs = {
 };
 
 exports.captureMatchDTO = (req, res) => {
-    Logger.log(`Recieved match data at ${new Date().toTimeString()} with ${req.body}`);
+    Console.log(`Recieved match data at ${new Date().toTimeString()} with ${req.body}`);
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
         headers: {
@@ -26,7 +26,7 @@ exports.captureMatchDTO = (req, res) => {
         try {
             (async () => {
                 const resRiot = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-                Logger.log(`Recieved ${resRiot.status} from match-v5 endpoint`);
+                Console.log(`Recieved ${resRiot.status} from match-v5 endpoint`);
                 const participants = resRiot.data.info.participants;
                 const players = await participantDTOHandler(participants);
                 // Send data to google script for collection
@@ -34,7 +34,7 @@ exports.captureMatchDTO = (req, res) => {
                     {
                         'players': players,
                     });
-                Logger.log(`Recieved ${resGoogle.status} from ${target} endpoint`);
+                Console.log(`Recieved ${resGoogle.status} from ${target} endpoint`);
             })();
         }
         catch (e) {
@@ -53,7 +53,7 @@ exports.captureMatchDTO = (req, res) => {
  * @returns A pruned list of participant data that can be used for stat collection
  */
 async function participantDTOHandler(participants) {
-    Logger.log('Began participant data preparation');
+    Console.log('Began participant data preparation');
     const client = axios.create({
         baseURL: 'https://na1.api.riotgames.com',
         headers: {
@@ -70,7 +70,7 @@ async function participantDTOHandler(participants) {
         try {
             // Replace puuid with summoner name
             const res = await client.get(`/lol/summoner/v4/summoners/by-puuid/${participant.puuid}`);
-            Logger.log(`Recieved ${res.status} code from summoner endpoint`);
+            Console.log(`Recieved ${res.status} code from summoner endpoint`);
             const name = res.data.name;
             data.name = name;
         }
@@ -97,16 +97,16 @@ async function participantDTOHandler(participants) {
 function axiosError(err) {
     if (err.response) {
         // Error code
-        Logger.log(`Recieved status code:: ${err.response.status}`);
-        Logger.log(`Request data:: ${err.response.data}`);
-        Logger.log(`With headers:: ${err.response.headers}`);
+        Console.log(`Recieved status code:: ${err.response.status}`);
+        Console.log(`Request data:: ${err.response.data}`);
+        Console.log(`With headers:: ${err.response.headers}`);
     }
     else if (err.request) {
         // No response
-        Logger.log(`No response recieved:: ${err.request}`);
+        Console.log(`No response recieved:: ${err.request}`);
     }
     else {
         // Error setting up request
-        Logger.log('Error', err.toJson());
+        Console.log('Error', err.toJson());
     }
 }
