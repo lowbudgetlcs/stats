@@ -1,12 +1,22 @@
 require('dotenv').config();
+
 const axios = require('axios');
+
+const { Logging } = require('@google-cloud/logging');
+const projectId = process.env.projectId;
+const logging = new Logging({ projectId });
+const logName = 'matchDTO';
+const log = logging.log(logName);
+let entry;
 
 const targetURLs = {
     ECONOMY: process.env.ECONOMY_URL,
 };
 
 exports.captureMatchDTO = (req, res) => {
-    Console.log(`Recieved match data at ${new Date().toTimeString()} with ${req.body}`);
+    entry = log.entry(`Recieved match data at ${new Date().toTimeString()}`);
+    log.info(entry);
+
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
         headers: {
@@ -26,7 +36,8 @@ exports.captureMatchDTO = (req, res) => {
         try {
             (async () => {
                 const resRiot = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-                Console.log(`Recieved ${resRiot.status} from match-v5 endpoint`);
+                entry = log.entry(`Recieved ${resRiot.status} from match-v5 endpoint`);
+                log.info(entry);
                 const participants = resRiot.data.info.participants;
                 const players = await participantDTOHandler(participants);
                 // Send data to google script for collection
@@ -34,7 +45,8 @@ exports.captureMatchDTO = (req, res) => {
                     {
                         'players': players,
                     });
-                Console.log(`Recieved ${resGoogle.status} from ${target} endpoint`);
+                entry = log.entry(`Recieved ${resGoogle.status} from ${target} endpoint`);
+                log.info(entry);
             })();
         }
         catch (e) {
@@ -53,7 +65,8 @@ exports.captureMatchDTO = (req, res) => {
  * @returns A pruned list of participant data that can be used for stat collection
  */
 async function participantDTOHandler(participants) {
-    Console.log('Began participant data preparation');
+    entry = log.entry(`Participant data prep started @${new Date().toTimeString()}`);
+    log.info(entry);
     const client = axios.create({
         baseURL: 'https://na1.api.riotgames.com',
         headers: {
@@ -70,7 +83,8 @@ async function participantDTOHandler(participants) {
         try {
             // Replace puuid with summoner name
             const res = await client.get(`/lol/summoner/v4/summoners/by-puuid/${participant.puuid}`);
-            Console.log(`Recieved ${res.status} code from summoner endpoint`);
+            entry = log.entry(`Recieved ${res.status} code from summoner endpoint`);
+            log.info(entry);
             const name = res.data.name;
             data.name = name;
         }
@@ -96,17 +110,19 @@ async function participantDTOHandler(participants) {
 
 function axiosError(err) {
     if (err.response) {
-        // Error code
-        Console.log(`Recieved status code:: ${err.response.status}`);
-        Console.log(`Request data:: ${err.response.data}`);
-        Console.log(`With headers:: ${err.response.headers}`);
+        // Recieved error status
+        entry = log.entry(`Recieved status code:: ${err.response.status}\nWith headers:: ${err.response.headers}\nRequest data:: ${err.response.data}\n`);
+        log.error(entry);
     }
     else if (err.request) {
         // No response
-        Console.log(`No response recieved:: ${err.request}`);
+        entry = log.entry(`No response recieved:: ${err.request}`);
+        log.error(entry);
+
     }
     else {
         // Error setting up request
-        Console.log('Error', err.toJson());
+        entry = err.toJson();
+        log.error(entry);
     }
 }
