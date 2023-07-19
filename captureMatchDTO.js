@@ -10,13 +10,12 @@ const log = logging.log(logName);
 let entry;
 
 const targetURLs = {
-    ECONOMY: process.env.ECONOMY_URL,
+    TEST: process.env.TEST_URL,
 };
 
-exports.captureMatchDTO = (req, res) => {
+exports.captureMatchDTO = async (req, res) => {
     entry = log.entry(`Recieved match data at ${new Date().toTimeString()}`);
     log.info(entry);
-
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
         headers: {
@@ -27,31 +26,29 @@ exports.captureMatchDTO = (req, res) => {
             return status >= 200 && status <= 299;
         },
     });
-    const body = req.body;
-    const gameId = body.gameId;
-    const target = body.metaData;
+    const gameId = req.body.gameId;
+    const target = req.body.metaData;
     if (gameId && target) {
         // Acknowledge payload delivery
         res.status(200).send();
         try {
-            (async () => {
-                const resRiot = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-                entry = log.entry(`Recieved ${resRiot.status} from match-v5 endpoint`);
-                log.info(entry);
-                const participants = resRiot.data.info.participants;
-                const players = await participantDTOHandler(participants);
-                // Send data to google script for collection
-                const resGoogle = await client.post(targetURLs[target],
-                    {
-                        'players': players,
-                    });
-                entry = log.entry(`Recieved ${resGoogle.status} from ${target} endpoint`);
-                log.info(entry);
-            })();
+            const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
+            entry = log.entry(`Recieved ${matchV5Response.status} from match-v5 endpoint`);
+            log.info(entry);
+            const matchDTO = await matchV5Response.data;
+            const participants = matchDTO.info.participants;
         }
         catch (e) {
             axiosError(e);
         }
+        const players = await participantDTOHandler(participants);
+        // Send data to google script for collection
+        const resGoogle = await client.post(targetURLs[target],
+            {
+                'players': players,
+            });
+        entry = log.entry(`Recieved ${resGoogle.status} from ${target} endpoint`);
+        log.info(entry);
     }
     else {
         // Tell riot i fucked up
