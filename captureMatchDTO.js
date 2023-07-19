@@ -26,35 +26,45 @@ exports.captureMatchDTO = async (req, res) => {
             return status >= 200 && status <= 299;
         },
     });
+    res.status(200).send();
     const gameId = req.body.gameId;
     const target = req.body.metaData;
-    if (gameId && target) {
-        // Acknowledge payload delivery
-        res.status(200).send();
-        try {
-            const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-            entry = log.entry(`Recieved ${matchV5Response.status} from match-v5 endpoint`);
-            log.info(entry);
-            const matchDTO = await matchV5Response.data;
-            const participants = matchDTO.info.participants;
-        }
-        catch (e) {
-            axiosError(e);
-        }
-        const players = await participantDTOHandler(participants);
-        // Send data to google script for collection
-        const resGoogle = await client.post(targetURLs[target],
-            {
+    if (!(gameId && target)) {
+        entry = log.entry(`Missing gameId or target`);
+        log.warning(entry);
+        return;
+    }
+    // Acknowledge payload delivery
+    const participants = await getMatchV5(gameId);
+    if(!participants){
+        entry = log.entry(`Missing participant data`);
+        log.error(entry);
+        return;
+    }
+    const players = await participantDTOHandler(participants);
+    // Send data to google script for collection
+    const resGoogle = await client.post(targetURLs[target],
+    {
                 'players': players,
             });
         entry = log.entry(`Recieved ${resGoogle.status} from ${target} endpoint`);
         log.info(entry);
     }
-    else {
-        // Tell riot i fucked up
-        res.status(500).send();
-    }
 };
+
+async function getMatchV5(){
+    try {
+        const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
+        entry = log.entry(`Recieved ${matchV5Response.status} from match-v5 endpoint`);
+        log.info(entry);
+        const matchDTO = await matchV5Response.data;
+        return matchDTO.info.participants;
+    }
+    catch (e) {
+        axiosError(e);
+        return {};
+    }
+}
 
 /**
  *
