@@ -43,13 +43,10 @@ exports.captureMatchDTO = async (req, res) => {
     }
     // Replace puuid's with player names
     const players = await participantDTOHandler(participants);
+    const destination = parseInt(targetURLs[target]);
     // Append data to stat sheet
-    const resGoogle = await client.post(targetURLs[target],
-        {
-            'players': players,
-        });
-    entry = log.entry(`Recieved ${resGoogle.status} from ${target} endpoint`);
-    log.info(entry);
+    const tmp = appendValues(destination, 'A1', 'RAW', players);
+    console.log(tmp);
 };
 
 
@@ -89,26 +86,26 @@ async function participantDTOHandler(participants) {
 
     const playerData = [];
     for (const participant of participants) {
-        const data = {};
+        const data = [];
         try {
             // Replace puuid with summoner name
             const res = await client.get(`/lol/summoner/v4/summoners/by-puuid/${participant.puuid}`);
             entry = log.entry(`Recieved ${res.status} code from summoner endpoint`);
             log.info(entry);
             const name = res.data.name;
-            data.name = name;
+            data.push(name);
             // Extract relevant data
-            data.kills = participant.kills;
-            data.deaths = participant.deaths;
-            data.assists = participant.assists;
-            data.kda = participant.challenges.kda;
-            data.level = participant.champLevel;
-            data.championName = participant.championName;
-            data.transform = participant.Transform;
-            data.firstBlood = participant.firstBloodKill;
-            data.firstTower = participant.firstTowerKill;
-            data.gold = participant.goldEarned;
-            data.visionScore = participant.visionScore;
+            data.push(participant.kills);
+            data.push(participant.deaths);
+            data.push(participant.assists);
+            data.push(participant.challenges.kda);
+            data.push(participant.champLevel);
+            data.push(participant.championName);
+            data.push(participant.Transform);
+            data.push(participant.firstBloodKill);
+            data.push(participant.firstTowerKill);
+            data.push(participant.goldEarned);
+            data.push(participant.visionScore);
             playerData.push(data);
         }
         catch (e) {
@@ -118,37 +115,31 @@ async function participantDTOHandler(participants) {
     return playerData;
 }
 
-async function appendValues(spreadsheetId, range, valueInputOption, _values){
-    const {GoogleAuth} = require('google-auth-library');
-  const {google} = require('googleapis');
+async function appendValues(spreadsheetId, range, valueInputOption, values) {
+    const { GoogleAuth } = require('google-auth-library');
+    const { google } = require('googleapis');
 
-  const auth = new GoogleAuth({
-    scopes: 'https://www.googleapis.com/auth/spreadsheets',
-  });
-
-  const service = google.sheets({version: 'v4', auth});
-  let values = [
-    [
-      // Cell values ...
-    ],
-    // Additional rows ...
-  ];
-  const resource = {
-    values,
-  };
-  try {
-    const result = await service.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption,
-      resource,
+    const auth = new GoogleAuth({
+        scopes: 'https://www.googleapis.com/auth/spreadsheets',
     });
-    console.log(`${result.data.updates.updatedCells} cells appended.`);
-    return result;
-  } catch (err) {
-    // TODO (developer) - Handle exception
-    throw err;
-  }
+    const service = google.sheets({ version: 'v4', auth });
+    const resource = {
+        values,
+    };
+    try {
+        const result = service.spreadsheets.values.append({
+            spreadsheetId,
+            range,
+            valueInputOption,
+            resource,
+        });
+        entry = log.entry(`Appended data to ${spreadsheetId} endpoint`);
+        log.info(entry);        
+        return result;
+    }
+    catch (err) {
+        throw err;
+    }
 }
 
 function axiosError(err) {
