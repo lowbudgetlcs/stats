@@ -3,14 +3,14 @@ require('dotenv').config();
 const axios = require('axios');
 
 const { Logging } = require('@google-cloud/logging');
-const projectId = process.env.projectId;
+const projectId = process.env.PROJECT_ID;
 const logging = new Logging({ projectId });
 const logName = 'matchDTO';
 const log = logging.log(logName);
 let entry;
 
 const targetURLs = {
-    TEST: process.env.TEST_SHEET_ID,
+    TEST: process.env.TEST_ID,
 };
 
 exports.captureMatchDTO = async (req, res) => {
@@ -27,7 +27,6 @@ exports.captureMatchDTO = async (req, res) => {
             return status >= 200 && status <= 299;
         },
     });
-
     const gameId = req.body.gameId;
     const target = req.body.metaData;
     if (!(gameId && target)) {
@@ -43,10 +42,9 @@ exports.captureMatchDTO = async (req, res) => {
     }
     // Replace puuid's with player names
     const players = await participantDTOHandler(participants);
-    const destination = parseInt(targetURLs[target]);
+    const destination = targetURLs[target];
     // Append data to stat sheet
-    const tmp = appendValues(destination, 'A1', 'RAW', players);
-    console.log(tmp);
+    const tmp = await appendValues(destination, 'RAW', players);
 };
 
 
@@ -115,31 +113,42 @@ async function participantDTOHandler(participants) {
     return playerData;
 }
 
-async function appendValues(spreadsheetId, range, valueInputOption, values) {
-    const { GoogleAuth } = require('google-auth-library');
+async function appendValues(spreadsheetId, valueInputOption, values) {
+    // Auth
     const { google } = require('googleapis');
-
-    const auth = new GoogleAuth({
-        scopes: 'https://www.googleapis.com/auth/spreadsheets',
+    const serviceEmail = process.env.CLIENT_EMAIL;
+    const serviceKey = process.env.CLIENT_PRIV_KEY;
+    const jwtClient = new google.auth.JWT({
+        email: serviceEmail,
+        key: serviceKey,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'] },
+    );
+    jwtClient.authorize(function(err, tokens) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            console.log('Successfully authorized JWT');
+        }
     });
-    const service = google.sheets({ version: 'v4', auth });
+    google.options({auth: jwtClient});
+
     const resource = {
         values,
     };
-    try {
-        const result = service.spreadsheets.values.append({
-            spreadsheetId,
-            range,
-            valueInputOption,
-            resource,
-        });
-        entry = log.entry(`Appended data to ${spreadsheetId} endpoint`);
-        log.info(entry);        
-        return result;
-    }
-    catch (err) {
-        throw err;
-    }
+    // Append player data to player sheet
+    const sheetName = 'Player Stats!A1';
+    const service = google.sheets({ version: 'v4' });
+    const result = await service.spreadsheets.values.append({
+        valueInputOption: valueInputOption,
+        spreadsheetId: spreadsheetId,
+        range: sheetName,
+        requestBody: resource,
+    });
+    entry = log.entry(`Appended data to ${spreadsheetId} endpoint`);
+    log.info(entry);
+    return result;
+
 }
 
 function axiosError(err) {

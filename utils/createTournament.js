@@ -27,7 +27,7 @@ const url = 'lol/tournament/v4/tournaments';
         const res = await axios.post(url,
             {
                 'name': name,
-                'providerId': process.env.PROVIDERID,
+                'providerId': process.env.PROVIDER_ID,
             });
         // log status and response body
         console.log(`Request ${res.request} yielded status:: ${res.status}\nheaders::\n${res.headers}\nbody::\n${res.data}`);
