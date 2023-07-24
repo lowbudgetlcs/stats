@@ -2,8 +2,7 @@ require('dotenv').config();
 const axios = require('axios');
 const { Logger } = require('./helpers/Logging');
 const { google } = require('googleapis');
-
-
+const { GoogleAuth } = require('google-auth-library');
 const projectId = process.env.PROJECT_ID;
 const logger = new Logger(projectId, 'matchDTO')
 const targetURLs = {
@@ -90,10 +89,12 @@ async function appendValues(spreadsheetId, valueInputOption, values) {
     const resource = {
         values,
     };
-    console.log(spreadsheetId)
     // Append player data to player sheet
     const sheetName = 'Player Stats!A1';
-    const service = google.sheets({ version: 'v4' });
+    const auth = new GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    const service = google.sheets({ version: 'v4', auth });
     const result = await service.spreadsheets.values.append({
         valueInputOption: valueInputOption,
         spreadsheetId: spreadsheetId,
