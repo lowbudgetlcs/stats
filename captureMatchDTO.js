@@ -64,13 +64,17 @@ async function participantDTOHandler(participants) {
     for (const participant of participants) {
         try {
             const fields = ((
-                { summonerName, championName, kills, deaths, assists, neutralMinionsKilled, totalMinionsKilled,
-                    champLevel, goldEarned, visionScore, totalDamageDealtToChampions,
-                    doubleKills, tripleKills, quadraKills, pentaKills, win },
-            ) => ({ summonerName, championName, kills, deaths, assists, neutralMinionsKilled, totalMinionsKilled,
-                champLevel, goldEarned, visionScore, totalDamageDealtToChampions,
-                doubleKills, tripleKills, quadraKills, pentaKills, win }))(participant);
-            fields.creepScore = fields.neutralMinionsKilled + fields.totalMinionsKilled;
+                { summonerName:name, championName: champion, kills, deaths, assists, neutralMinionsKilled: laneMinions, 
+                    totalMinionsKilled: jungleMinions, champLevel: level, goldEarned: gold, visionScore, 
+                    totalDamageDealtToChampions: totalDamageToChamps, totalHealsOnTeammates: totalHealing, 
+                    totalDamageShieldedOnTeammates: totalShielding, totalDamageTaken: damageTaken, 
+                    damageSelfMitigated: damageMitigated, damageDealtToBuildings: totalDamageToTurrets, 
+                    longestTimeSpentLiving: longestLife, doubleKills, tripleKills, quadraKills, pentaKills, 
+                    timePlayerd: gameLength, win },
+            ) => ({ name, champion, kills, deaths, assists, laneMinions, jungleMinions, level, gold, visionScore, 
+                totalDamageToChamps, totalHealing, totalShielding, damageTaken, damageMitigated, totalDamageToTurrets, 
+                longestLife, doubleKills, tripleKills, quadraKills, pentaKills, gameLength, win }))(participant);
+            fields.creepScore = fields.laneMinions + fields.jungleMinions;
             const data = Object.values(fields);
             playerData.push(data);
         }
