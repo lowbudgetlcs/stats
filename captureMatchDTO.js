@@ -86,7 +86,6 @@ async function appendValues(spreadsheetId, valueInputOption, values) {
     const resource = {
         values,
     };
-    console.log(spreadsheetId);
     // Append player data to player sheet
     const sheetName = 'Player Stats!A1';
     const auth = new GoogleAuth({
