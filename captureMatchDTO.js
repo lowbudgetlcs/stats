@@ -4,13 +4,13 @@ const { Logger } = require('./helpers/Logging');
 const { google } = require('googleapis');
 const { GoogleAuth } = require('google-auth-library');
 const projectId = process.env.PROJECT_ID;
-const logger = new Logger(projectId, 'matchDTO')
+const logger = new Logger(projectId, 'matchDTO');
 const targetURLs = {
     TEST: process.env.TEST_ID,
 };
-//Receive Request, contains z
+// Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
-    logger.write({ severity: 'INFO' }, `Recieved match data`);
+    logger.write({ severity: 'INFO' }, 'Recieved match data');
     res.status(200).send();
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
@@ -56,26 +56,23 @@ async function getMatchV5(client, gameId) {
  * @returns A pruned list of participant data that can be used for stat collection
  */
 async function participantDTOHandler(participants) {
-    logger.write({ severity: 'INFO' }, `Participant data prep started`);
+    logger.write({ severity: 'INFO' }, 'Participant data prep started');
     // New client for SUMMONER endpoint
 
     const playerData = [];
     for (const participant of participants) {
-        const data = [];
         try {
-            data.push(participant.summonerName);
-            // Extract relevant data
-            data.push(participant.kills);
-            data.push(participant.deaths);
-            data.push(participant.assists);
-            data.push(participant.challenges.kda);
-            data.push(participant.champLevel);
-            data.push(participant.championName);
-            data.push(participant.Transform);
-            data.push(participant.firstBloodKill);
-            data.push(participant.firstTowerKill);
-            data.push(participant.goldEarned);
-            data.push(participant.visionScore);
+            const fields = ((
+                { summonerName, championName, kills, deaths, assists, neutralMinionsKilled, totalMinionsKilled,
+                    champLevel, goldEarned, visionScore, totalDamageDealtToChampions,
+                    doubleKills, tripleKills, quadraKills, pentaKills, win },
+            ) => ({
+                summonerName, championName, kills, deaths, assists, neutralMinionsKilled, totalMinionsKilled,
+                champLevel, goldEarned, visionScore, totalDamageDealtToChampions,
+                doubleKills, tripleKills, quadraKills, pentaKills, win
+            }))(participant);
+            fields.creepScore = fields.neutralMinionsKilled + fields.totalMinionsKilled;
+            const data = Object.values(fields);
             playerData.push(data);
         }
         catch (e) {
@@ -89,6 +86,7 @@ async function appendValues(spreadsheetId, valueInputOption, values) {
     const resource = {
         values,
     };
+    console.log(spreadsheetId);
     // Append player data to player sheet
     const sheetName = 'Player Stats!A1';
     const auth = new GoogleAuth({
