@@ -62,8 +62,6 @@ async function getMatchV5(client, gameId) {
  */
 async function participantDTOHandler(participants) {
     logger.write({ severity: 'INFO' }, 'Participant data prep started');
-    // New client for SUMMONER endpoint
-
     const playerData = [];
     for (const participant of participants) {
         try {
