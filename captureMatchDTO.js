@@ -7,6 +7,11 @@ const projectId = process.env.PROJECT_ID;
 const logger = new Logger(projectId, 'matchDTO');
 const targetURLs = {
     TEST: process.env.TEST_ID,
+    ECONOMY: process.env.ECONOMY_ID,
+    COMMERCIAL: process.env.COMMERCIAL_ID,
+    FINANCIAL: process.env.FINANCIAL_ID,
+    EXECUTIVE: process.env.EXECUTIVE_ID
+
 };
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
@@ -89,7 +94,7 @@ async function appendValues(spreadsheetId, valueInputOption, values) {
         values,
     };
     // Append player data to player sheet
-    const sheetName = 'Player Stats!A1';
+    const sheetName = 'RAW STATS!A1';
     const auth = new GoogleAuth({
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
