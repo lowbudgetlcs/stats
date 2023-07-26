@@ -72,7 +72,7 @@ async function participantDTOHandler(participants) {
                     totalDamageShieldedOnTeammates: totalShielding, totalDamageTaken: damageTaken, 
                     damageSelfMitigated: damageMitigated, damageDealtToBuildings: totalDamageToTurrets, 
                     longestTimeSpentLiving: longestLife, doubleKills, tripleKills, quadraKills, pentaKills, 
-                    timePlayerd: gameLength, win },
+                    timePlayed: gameLength, win },
             ) => ({ name, champion, kills, deaths, assists, laneMinions, jungleMinions, level, gold, visionScore, 
                 totalDamageToChamps, totalHealing, totalShielding, damageTaken, damageMitigated, totalDamageToTurrets, 
                 longestLife, doubleKills, tripleKills, quadraKills, pentaKills, gameLength, win }))(participant);
