@@ -33,12 +33,12 @@ exports.captureMatchDTO = async (req, res) => {
         logger.write({ severity: 'WARNING' }, 'Missing gameId or target');
         return;
     }
-    const participants = await getMatchV5(client, gameId);
+    const matchDTO = await getMatchV5(client, gameId);
     if (!participants) {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
-    const players = await participantDTOHandler(participants);
+    const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
     await appendValues(destination, 'RAW', players);
 };
@@ -48,7 +48,7 @@ async function getMatchV5(client, gameId) {
         const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
         logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status} from match-v5 endpoint`);
         const matchDTO = matchV5Response.data;
-        return matchDTO.info.participants;
+        return matchDTO;
     }
     catch (e) {
         return {};
@@ -60,7 +60,9 @@ async function getMatchV5(client, gameId) {
  * @param {List of participant data from Riot server call} participants
  * @returns A pruned list of participant data that can be used for stat collection
  */
-async function participantDTOHandler(participants) {
+async function participantDTOHandler(matchDTO) {
+    const tcode = matchDTO.info.tournamentCode;
+    const participants = matchDTO.info.participants;
     logger.write({ severity: 'INFO' }, 'Participant data prep started');
     const playerData = [];
     for (const participant of participants) {
@@ -78,6 +80,7 @@ async function participantDTOHandler(participants) {
                 longestLife, doubleKills, tripleKills, quadraKills, pentaKills, gameLength, win }))(participant);
             fields.creepScore = fields.laneMinions + fields.jungleMinions;
             fields.games = 1;
+            fields.tcode = tcode;
             const data = Object.values(fields);
             playerData.push(data);
         }
