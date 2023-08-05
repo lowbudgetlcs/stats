@@ -66,17 +66,18 @@ async function participantDTOHandler(participants) {
     for (const participant of participants) {
         try {
             const fields = ((
-                { summonerName:name, championName: champion, kills, deaths, assists, neutralMinionsKilled: laneMinions, 
-                    totalMinionsKilled: jungleMinions, champLevel: level, goldEarned: gold, visionScore, 
-                    totalDamageDealtToChampions: totalDamageToChamps, totalHealsOnTeammates: totalHealing, 
-                    totalDamageShieldedOnTeammates: totalShielding, totalDamageTaken: damageTaken, 
-                    damageSelfMitigated: damageMitigated, damageDealtToBuildings: totalDamageToTurrets, 
-                    longestTimeSpentLiving: longestLife, doubleKills, tripleKills, quadraKills, pentaKills, 
+                { summonerName:name, championName: champion, kills, deaths, assists, neutralMinionsKilled: laneMinions,
+                    totalMinionsKilled: jungleMinions, champLevel: level, goldEarned: gold, visionScore,
+                    totalDamageDealtToChampions: totalDamageToChamps, totalHealsOnTeammates: totalHealing,
+                    totalDamageShieldedOnTeammates: totalShielding, totalDamageTaken: damageTaken,
+                    damageSelfMitigated: damageMitigated, damageDealtToBuildings: totalDamageToTurrets,
+                    longestTimeSpentLiving: longestLife, doubleKills, tripleKills, quadraKills, pentaKills,
                     timePlayed: gameLength, win },
-            ) => ({ name, champion, kills, deaths, assists, laneMinions, jungleMinions, level, gold, visionScore, 
-                totalDamageToChamps, totalHealing, totalShielding, damageTaken, damageMitigated, totalDamageToTurrets, 
+            ) => ({ name, champion, kills, deaths, assists, laneMinions, jungleMinions, level, gold, visionScore,
+                totalDamageToChamps, totalHealing, totalShielding, damageTaken, damageMitigated, totalDamageToTurrets,
                 longestLife, doubleKills, tripleKills, quadraKills, pentaKills, gameLength, win }))(participant);
             fields.creepScore = fields.laneMinions + fields.jungleMinions;
+            fields.games = 1;
             const data = Object.values(fields);
             playerData.push(data);
         }
