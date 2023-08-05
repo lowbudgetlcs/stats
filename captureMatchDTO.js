@@ -10,7 +10,7 @@ const targetURLs = {
     ECONOMY: process.env.ECONOMY_ID,
     COMMERCIAL: process.env.COMMERCIAL_ID,
     FINANCIAL: process.env.FINANCIAL_ID,
-    EXECUTIVE: process.env.EXECUTIVE_ID
+    EXECUTIVE: process.env.EXECUTIVE_ID,
 
 };
 // Receive Request, contains z
@@ -34,13 +34,13 @@ exports.captureMatchDTO = async (req, res) => {
         return;
     }
     const matchDTO = await getMatchV5(client, gameId);
-    if (!participants) {
+    if (!matchDTO) {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
-    await appendValues(destination, 'RAW', players);
+    await appendValues(destination, players);
 };
 
 async function getMatchV5(client, gameId) {
@@ -68,8 +68,8 @@ async function participantDTOHandler(matchDTO) {
     for (const participant of participants) {
         try {
             const fields = ((
-                { summonerName:name, championName: champion, kills, deaths, assists, neutralMinionsKilled: laneMinions,
-                    totalMinionsKilled: jungleMinions, champLevel: level, goldEarned: gold, visionScore,
+                { summonerName:name, championName: champion, kills, deaths, assists, neutralMinionsKilled: jungleMinions,
+                    totalMinionsKilled: laneMinions, champLevel: level, goldEarned: gold, visionScore,
                     totalDamageDealtToChampions: totalDamageToChamps, totalHealsOnTeammates: totalHealing,
                     totalDamageShieldedOnTeammates: totalShielding, totalDamageTaken: damageTaken,
                     damageSelfMitigated: damageMitigated, damageDealtToBuildings: totalDamageToTurrets,
@@ -79,8 +79,11 @@ async function participantDTOHandler(matchDTO) {
                 totalDamageToChamps, totalHealing, totalShielding, damageTaken, damageMitigated, totalDamageToTurrets,
                 longestLife, doubleKills, tripleKills, quadraKills, pentaKills, gameLength, win }))(participant);
             fields.creepScore = fields.laneMinions + fields.jungleMinions;
+            delete fields.laneMinions;
+            delete fields.jungleMinions;
             fields.games = 1;
             fields.tcode = tcode;
+            fields.team = '=VLOOKUP(INDIRECT(ADDRESS(ROW(), COLUMN(A1))), \'TEAM IDS\'!$A1:B, 2, FALSE)';
             const data = Object.values(fields);
             playerData.push(data);
         }
@@ -90,7 +93,7 @@ async function participantDTOHandler(matchDTO) {
     return playerData;
 }
 
-async function appendValues(spreadsheetId, valueInputOption, values) {
+async function appendValues(spreadsheetId, values) {
     // Auth
     const resource = {
         values,
@@ -102,7 +105,8 @@ async function appendValues(spreadsheetId, valueInputOption, values) {
     });
     const service = google.sheets({ version: 'v4', auth });
     const result = await service.spreadsheets.values.append({
-        valueInputOption: valueInputOption,
+        valueInputOption: 'USER_ENTERED',
+        responseValueRenderOption: 'UNFORMATTED_VALUE',
         spreadsheetId: spreadsheetId,
         range: sheetName,
         requestBody: resource,
