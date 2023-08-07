@@ -83,7 +83,7 @@ async function participantDTOHandler(matchDTO) {
             delete fields.jungleMinions;
             fields.games = 1;
             fields.tcode = tcode;
-            fields.team = '=VLOOKUP(INDIRECT(ADDRESS(ROW(), COLUMN(A1))), \'TEAM IDS\'!$A1:B, 2, FALSE)';
+            fields.team = '=VLOOKUP(INDIRECT(ADDRESS(ROW(), COLUMN(A1))), \'Team Ids (Hidden)\'!$A1:B, 2, FALSE)';
             const data = Object.values(fields);
             playerData.push(data);
         }
@@ -99,7 +99,7 @@ async function appendValues(spreadsheetId, values) {
         values,
     };
     // Append player data to player sheet
-    const sheetName = 'RAW STATS!A1';
+    const sheetName = 'Raw Stats (Hidden)!A1';
     const auth = new GoogleAuth({
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
