@@ -84,6 +84,7 @@ async function participantDTOHandler(matchDTO) {
             fields.games = 1;
             fields.tcode = tcode;
             fields.team = '=VLOOKUP(INDIRECT(ADDRESS(ROW(), COLUMN(A1))), \'Team Ids (Hidden)\'!$A1:B, 2, FALSE)';
+            fields.teamKills = '=SUMIFS($C$1:C, $X$1:X, INDIRECT(ADDRESS(ROW(), COLUMN($X$1))), $Y$1:Y, INDIRECT(ADDRESS(ROW(), COLUMN($Y$1))))';
             const data = Object.values(fields);
             playerData.push(data);
         }
