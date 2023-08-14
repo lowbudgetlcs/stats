@@ -16,6 +16,7 @@ const targetURLs = {
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
     logger.write({ severity: 'INFO' }, 'Recieved match data');
+    logger.write({severity: 'INFO' }, JSON.stringify(req.body));
     res.status(200).send();
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
