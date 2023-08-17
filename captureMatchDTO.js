@@ -16,7 +16,7 @@ const targetURLs = {
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
     logger.write({ severity: 'INFO' }, 'Recieved match data');
-    logger.write({severity: 'INFO' }, JSON.stringify(req.body));
+    logger.write({ severity: 'INFO' }, JSON.stringify(req.body));
     res.status(200).send();
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
@@ -43,7 +43,7 @@ exports.captureMatchDTO = async (req, res) => {
     matchDTO.tournamentCode = tcode;
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
-    await appendValues(destination, players);
+    await appendValues(destination, players, target);
 };
 
 async function getMatchV5(client, gameId) {
@@ -97,7 +97,7 @@ async function participantDTOHandler(matchDTO) {
     return playerData;
 }
 
-async function appendValues(spreadsheetId, values) {
+async function appendValues(spreadsheetId, values, target) {
     // Auth
     const resource = {
         values,
@@ -115,7 +115,7 @@ async function appendValues(spreadsheetId, values) {
         range: sheetName,
         requestBody: resource,
     });
-    logger.write({ severity: 'INFO' }, `Appended data to ${spreadsheetId} endpoint`);
+    logger.write({ severity: 'INFO' }, `Appended data to ${target} endpoint`);
     return result;
 
 }
