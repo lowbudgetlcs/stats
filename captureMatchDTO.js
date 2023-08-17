@@ -30,6 +30,7 @@ exports.captureMatchDTO = async (req, res) => {
     });
     const gameId = req.body.gameId;
     const target = req.body.metaData;
+    const tcode = req.body.shortCode;
     if (!(gameId && target)) {
         logger.write({ severity: 'WARNING' }, 'Missing gameId or target');
         return;
@@ -39,6 +40,7 @@ exports.captureMatchDTO = async (req, res) => {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
+    matchDTO.tournamentCode = tcode;
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
     await appendValues(destination, players);
