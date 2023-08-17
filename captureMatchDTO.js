@@ -32,7 +32,7 @@ exports.captureMatchDTO = async (req, res) => {
     const target = req.body.metaData;
     const tcode = req.body.shortCode;
     if (!(gameId && target)) {
-        logger.write({ severity: 'WARNING' }, 'Missing gameId or target');
+        logger.write({ severity: 'ERROR' }, 'Missing gameId or target');
         return;
     }
     const matchDTO = await getMatchV5(client, gameId);
@@ -49,7 +49,7 @@ exports.captureMatchDTO = async (req, res) => {
 async function getMatchV5(client, gameId) {
     try {
         const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-        logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status} from match-v5 endpoint`);
+        logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status}`);
         const matchDTO = matchV5Response.data;
         return matchDTO;
     }
