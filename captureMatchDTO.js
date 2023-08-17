@@ -16,7 +16,7 @@ const targetURLs = {
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
     logger.write({ severity: 'INFO' }, 'Recieved match data');
-    logger.write({severity: 'INFO' }, JSON.stringify(req.body));
+    logger.write({ severity: 'INFO' }, JSON.stringify(req.body));
     res.status(200).send();
     const client = axios.create({
         baseURL: 'https://americas.api.riotgames.com',
@@ -30,8 +30,9 @@ exports.captureMatchDTO = async (req, res) => {
     });
     const gameId = req.body.gameId;
     const target = req.body.metaData;
+    const tcode = req.body.shortCode;
     if (!(gameId && target)) {
-        logger.write({ severity: 'WARNING' }, 'Missing gameId or target');
+        logger.write({ severity: 'ERROR' }, 'Missing gameId or target');
         return;
     }
     const matchDTO = await getMatchV5(client, gameId);
@@ -39,15 +40,16 @@ exports.captureMatchDTO = async (req, res) => {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
+    matchDTO.tournamentCode = tcode;
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
-    await appendValues(destination, players);
+    await appendValues(destination, players, target);
 };
 
 async function getMatchV5(client, gameId) {
     try {
         const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
-        logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status} from match-v5 endpoint`);
+        logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status}`);
         const matchDTO = matchV5Response.data;
         return matchDTO;
     }
@@ -95,7 +97,7 @@ async function participantDTOHandler(matchDTO) {
     return playerData;
 }
 
-async function appendValues(spreadsheetId, values) {
+async function appendValues(spreadsheetId, values, target) {
     // Auth
     const resource = {
         values,
@@ -113,7 +115,7 @@ async function appendValues(spreadsheetId, values) {
         range: sheetName,
         requestBody: resource,
     });
-    logger.write({ severity: 'INFO' }, `Appended data to ${spreadsheetId} endpoint`);
+    logger.write({ severity: 'INFO' }, `Appended data to ${target} endpoint`);
     return result;
 
 }
