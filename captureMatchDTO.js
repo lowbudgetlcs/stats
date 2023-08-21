@@ -39,7 +39,6 @@ exports.captureMatchDTO = async (req, res) => {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
-    matchDTO.tournamentCode = await req.body.shortCode;
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
     await appendValues(destination, players, target);
@@ -49,7 +48,7 @@ async function getMatchV5(client, gameId) {
     try {
         const matchV5Response = await client.get(`/lol/match/v5/matches/NA1_${gameId}`);
         logger.write({ severity: 'INFO' }, `Recieved ${matchV5Response.status}`);
-        const matchDTO = matchV5Response.data;
+        const matchDTO = await matchV5Response.data;
         return matchDTO;
     }
     catch (e) {
@@ -63,8 +62,8 @@ async function getMatchV5(client, gameId) {
  * @returns A pruned list of participant data that can be used for stat collection
  */
 async function participantDTOHandler(matchDTO) {
-    const tcode = matchDTO.info.tournamentCode;
-    const participants = matchDTO.info.participants;
+    const tcode = await matchDTO.info.tournamentCode;
+    const participants = await matchDTO.info.participants;
     logger.write({ severity: 'INFO' }, 'Participant data prep started');
     const playerData = [];
     for (const participant of participants) {
@@ -91,6 +90,7 @@ async function participantDTOHandler(matchDTO) {
             playerData.push(data);
         }
         catch (e) {
+            logger.write(JSON.stringify(e));
         }
     }
     return playerData;
@@ -107,14 +107,21 @@ async function appendValues(spreadsheetId, values, target) {
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     const service = google.sheets({ version: 'v4', auth });
-    const result = await service.spreadsheets.values.append({
-        valueInputOption: 'USER_ENTERED',
-        responseValueRenderOption: 'UNFORMATTED_VALUE',
-        spreadsheetId: spreadsheetId,
-        range: sheetName,
-        requestBody: resource,
-    });
-    logger.write({ severity: 'INFO' }, `Appended data to ${target} endpoint`);
+    let result;
+    try {
+        result = await service.spreadsheets.values.append({
+            valueInputOption: 'USER_ENTERED',
+            responseValueRenderOption: 'UNFORMATTED_VALUE',
+            spreadsheetId: spreadsheetId,
+            range: sheetName,
+            requestBody: resource,
+        });
+        logger.write({ severity: 'INFO' }, `Appended data to ${target} endpoint`);
+    }
+    catch (e) {
+        logger.write(JSON.stringify(e));
+    }
+    logger.write(result);
     return result;
 
 }
