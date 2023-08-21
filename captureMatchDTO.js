@@ -28,9 +28,8 @@ exports.captureMatchDTO = async (req, res) => {
             return status >= 200 && status <= 299;
         },
     });
-    const gameId = req.body.gameId;
-    const target = req.body.metaData;
-    const tcode = req.body.shortCode;
+    const gameId = await req.body.gameId;
+    const target = await req.body.metaData;
     if (!(gameId && target)) {
         logger.write({ severity: 'ERROR' }, 'Missing gameId or target');
         return;
@@ -40,7 +39,7 @@ exports.captureMatchDTO = async (req, res) => {
         logger.write({ severity: 'ERROR' }, 'Missing participant data');
         return;
     }
-    matchDTO.tournamentCode = tcode;
+    matchDTO.tournamentCode = await req.body.shortCode;
     const players = await participantDTOHandler(matchDTO);
     const destination = targetURLs[target];
     await appendValues(destination, players, target);
