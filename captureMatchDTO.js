@@ -11,7 +11,7 @@ const targetURLs = {
     COMMERCIAL: process.env.COMMERCIAL_ID,
     FINANCIAL: process.env.FINANCIAL_ID,
     EXECUTIVE: process.env.EXECUTIVE_ID,
-
+    HLCS: process.env.HLCS_ID
 };
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
