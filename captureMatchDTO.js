@@ -11,7 +11,7 @@ const targetURLs = {
     COMMERCIAL: process.env.COMMERCIAL_ID,
     FINANCIAL: process.env.FINANCIAL_ID,
     EXECUTIVE: process.env.EXECUTIVE_ID,
-    HLCS: process.env.HLCS_ID
+    HLCS: process.env.HLCS_ID,
 };
 // Receive Request, contains z
 exports.captureMatchDTO = async (req, res) => {
@@ -90,7 +90,7 @@ async function participantDTOHandler(matchDTO) {
             playerData.push(data);
         }
         catch (e) {
-            logger.write(JSON.stringify(e));
+            logger.write({ severity: 'INFO' }, JSON.stringify(e));
         }
     }
     return playerData;
@@ -119,9 +119,9 @@ async function appendValues(spreadsheetId, values, target) {
         logger.write({ severity: 'INFO' }, `Appended data to ${target} endpoint`);
     }
     catch (e) {
-        logger.write(JSON.stringify(e));
+        logger.write({ severity: 'INFO' }, JSON.stringify(e));
     }
-    logger.write(result);
+    logger.write({ severity: 'INFO' }, result);
     return result;
 
 }
